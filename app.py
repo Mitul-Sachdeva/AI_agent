@@ -26,7 +26,7 @@ Settings.chunk_size = 512
 pinecone_client = Pinecone(api_key=os.environ["PINECONE_API_KEY"])
 
 # Access the Pinecone index
-pine_index = pinecone_client.Index("prodigalrag")
+pine_index = pinecone_client.Index("knowledgeagent")
 
 # Create a PineconeVectorStore
 vector_store = PineconeVectorStore(pinecone_index=pine_index)
