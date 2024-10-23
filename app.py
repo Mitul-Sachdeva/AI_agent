@@ -1,45 +1,48 @@
 
 import os
 from dotenv import load_dotenv
-from pinecone import Pinecone
 from llama_index.llms.gemini import Gemini
-from llama_index.vector_stores.pinecone import PineconeVectorStore
+from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.embeddings.gemini import GeminiEmbedding
 from llama_index.core import VectorStoreIndex
 from llama_index.core import VectorStoreIndex
-from llama_index.core.retrievers import VectorIndexRetriever
-from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core import Settings
+import chromadb
 
 load_dotenv()
+llm = Gemini(api_key=os.environ["GOOGLE_API_KEY"])
+embed_model = GeminiEmbedding(model_name="models/embedding-001")
 
-# Define the system prompt for the LLM
-system_prompt = """You are a knowledgeable assistant tasked with answering questions using the most relevant information from the provided dataset."""
-
-# Set up LLM as Gemini Pro with system prompt
-llm = Gemini(api_key=os.environ["GOOGLE_API_KEY"], system_prompt=system_prompt)
+llm = Gemini(api_key=os.environ["GOOGLE_API_KEY"])
 embed_model = GeminiEmbedding(model_name="models/embedding-001")
 Settings.llm = llm
 Settings.embed_model = embed_model
-Settings.chunk_size = 512
-# Create Pinecone client
-pinecone_client = Pinecone(api_key=os.environ["PINECONE_API_KEY"])
 
-# Access the Pinecone index
-pine_index = pinecone_client.Index("knowledgeagent")
+# Load from disk
+load_client = chromadb.PersistentClient(path="./chroma_db")
 
-# Create a PineconeVectorStore
-vector_store = PineconeVectorStore(pinecone_index=pine_index)
+# Fetch the collection
+chroma_collection = load_client.get_collection("quickstart")
 
-# Create VectorStoreIndex from the vector store
-index = VectorStoreIndex.from_vector_store(vector_store=vector_store)
+# Fetch the vector store
+vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
 
-# Set up retriever to get the top 5 similar results
-retriever = VectorIndexRetriever(index=index, similarity_top_k=5)
+# Get the index from the vector store
+index = VectorStoreIndex.from_vector_store(
+    vector_store
+)
 
-# Create the query engine
-query_engine = RetrieverQueryEngine(retriever=retriever)
+from llama_index.core import PromptTemplate
 
+template = (
+    """ You are an assistant for question-answering tasks.
+Use the following context to answer the question.
+If you don't know the answer, just say that you don't know.
+Use five sentences maximum and keep the answer concise.\n
+Question: {query_str} \nContext: {context_str} \nAnswer:"""
+)
+llm_prompt = PromptTemplate(template)
+query_engine = index.as_chat_engine(text_qa_template=llm_prompt)
 while(True):
     query = input("Enter your question: ")
     response = query_engine.query(query)
