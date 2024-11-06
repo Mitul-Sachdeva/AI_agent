@@ -7,14 +7,13 @@ from llama_index.embeddings.gemini import GeminiEmbedding
 from llama_index.core import VectorStoreIndex
 from llama_index.core import VectorStoreIndex
 from llama_index.core import Settings
+from llama_index.core import PromptTemplate
 import chromadb
 
 load_dotenv()
-llm = Gemini(api_key=os.environ["GOOGLE_API_KEY"])
+llm = Gemini(api_key=os.environ["GOOGLE_API_KEY"],model="models/gemini-pro")
 embed_model = GeminiEmbedding(model_name="models/embedding-001")
 
-llm = Gemini(api_key=os.environ["GOOGLE_API_KEY"])
-embed_model = GeminiEmbedding(model_name="models/embedding-001")
 Settings.llm = llm
 Settings.embed_model = embed_model
 
@@ -32,17 +31,18 @@ index = VectorStoreIndex.from_vector_store(
     vector_store
 )
 
-from llama_index.core import PromptTemplate
+
 
 template = (
     """ You are an assistant for question-answering tasks.
 Use the following context to answer the question.
-If you don't know the answer, just say that you don't know.
-Use five sentences maximum and keep the answer concise.\n
+If you don't know the answer, just say that you don't know. Always Give long detailed answers based on context.\n
 Question: {query_str} \nContext: {context_str} \nAnswer:"""
 )
 llm_prompt = PromptTemplate(template)
 query_engine = index.as_chat_engine(text_qa_template=llm_prompt)
+
+
 while(True):
     query = input("Enter your question: ")
     response = query_engine.query(query)

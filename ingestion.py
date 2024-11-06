@@ -13,14 +13,12 @@ import chromadb
 import re
 load_dotenv()
 
-
-llm = Gemini(api_key=os.environ["GOOGLE_API_KEY"])
-embed_model = GeminiEmbedding(model_name="models/embedding-001")
-
 llm = Gemini(api_key=os.environ["GOOGLE_API_KEY"])
 embed_model = GeminiEmbedding(model_name="models/embedding-001")
 Settings.llm = llm
 Settings.embed_model = embed_model
+Settings.chunk_size = 512
+Settings.chunk_overlap = 50
 
 # Load data from PDF
 from llama_index.core import SimpleDirectoryReader
@@ -28,7 +26,7 @@ documents = SimpleDirectoryReader("data").load_data()
 
 # Create a client and a new collection
 client = chromadb.PersistentClient(path="./chroma_db")
-chroma_collection = client.get_or_create_collection("quickstart")
+chroma_collection = client.get_or_create_collection("constitution")
 
 # Create a vector store
 vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
