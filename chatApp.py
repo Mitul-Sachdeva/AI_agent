@@ -81,7 +81,7 @@ def create_query_engine(index):
 
 def get_response_text(response):
     """Extract just the response text from the LlamaIndex response object"""
-    print(response.response)
+    # print(response.response)
     return str(response.response)
 
 def main():
