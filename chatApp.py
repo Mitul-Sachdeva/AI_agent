@@ -11,7 +11,7 @@ from llama_index.llms.gemini import Gemini
 from llama_index.embeddings.gemini import GeminiEmbedding
 from llama_index.vector_stores.pinecone import PineconeVectorStore
 from pinecone import Pinecone
-import chromadb
+# import chromadb
 import logging
 
 # Set up logging
