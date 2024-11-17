@@ -65,6 +65,7 @@ def create_query_engine(index):
     "{context_str}\n"
     "---------------------\n"
     "Given the context information and not prior knowledge, "
+    "Only answer questions that you can answer based on the context. "
     "answer the query.\n"
     "Query: {query_str}\n"
     "Answer: "
