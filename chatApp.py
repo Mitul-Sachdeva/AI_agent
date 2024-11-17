@@ -3,7 +3,7 @@ import streamlit as st
 import os
 from dotenv import load_dotenv
 from llama_index.core import Settings
-from llama_index.vector_stores.chroma import ChromaVectorStore
+# from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core import VectorStoreIndex
 from llama_index.core import PromptTemplate
 from llama_index.core.prompts.prompt_type import PromptType
