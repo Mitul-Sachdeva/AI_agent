@@ -6,8 +6,11 @@ from llama_index.core import Settings
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core import VectorStoreIndex
 from llama_index.core import PromptTemplate
+from llama_index.core.prompts.prompt_type import PromptType
 from llama_index.llms.gemini import Gemini
 from llama_index.embeddings.gemini import GeminiEmbedding
+from llama_index.vector_stores.pinecone import PineconeVectorStore
+from pinecone import Pinecone
 import chromadb
 import logging
 
@@ -24,16 +27,21 @@ def initialize_chatbot():
     try:
         load_dotenv()
         
-        llm = Gemini(api_key=os.environ["GOOGLE_API_KEY"],model="models/gemini-pro")
+        llm = Gemini(api_key=os.environ["GOOGLE_API_KEY"],model="models/gemini-1.5-pro-002")
         embed_model = GeminiEmbedding(model_name="models/embedding-001")
         
         Settings.llm = llm
         Settings.embed_model = embed_model
         
-        load_client = chromadb.PersistentClient(path="./chroma_db")
-        chroma_collection = load_client.get_collection("constitution")
-        
-        vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+        # load_client = chromadb.PersistentClient(path="./chroma_db")
+        # chroma_collection = load_client.get_collection("constitution6")
+        # vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+
+        pinecone_client = Pinecone(api_key=os.environ["PINECONE_API_KEY"])
+        pinecone_index = pinecone_client.Index("constitution")
+        vector_store = PineconeVectorStore(pinecone_index=pinecone_index)
+
+
         index = VectorStoreIndex.from_vector_store(vector_store)
         
         return index
@@ -43,18 +51,32 @@ def initialize_chatbot():
         raise
 
 def create_query_engine(index):
-    template = (
-        """ You are an assistant for question-answering tasks.
-        Use the following context to answer the question.
-        If you don't know the answer, just say that you don't know. Always give long, detailed answers based on context.\n
-        Question: {query_str} \nContext: {context_str} \nAnswer:"""
-    )
-    qa_prompt = PromptTemplate(template)
+    # template = (
+    #     """ You are an assistant for question-answering tasks.
+    #     Use the following context to answer the question.
+    #     If you don't know the answer, just say that you don't know. Always give long, detailed answers based on context.\n
+    #     Question: {query_str} \nContext: {context_str} \nAnswer:"""
+    # )
+    # qa_prompt = PromptTemplate(template)
     
+    DEFAULT_TEXT_QA_PROMPT_TMPL = (
+    "Context information is below.\n"
+    "---------------------\n"
+    "{context_str}\n"
+    "---------------------\n"
+    "Given the context information and not prior knowledge, "
+    "answer the query.\n"
+    "Query: {query_str}\n"
+    "Answer: "
+    )
+    DEFAULT_TEXT_QA_PROMPT = PromptTemplate(
+        DEFAULT_TEXT_QA_PROMPT_TMPL, prompt_type=PromptType.QUESTION_ANSWER
+    )
+
+
     return index.as_query_engine(
-        text_qa_template=qa_prompt,
+        text_qa_template=DEFAULT_TEXT_QA_PROMPT,
         similarity_top_k=7,
-        response_mode="compact"
     )
 
 def get_response_text(response):
